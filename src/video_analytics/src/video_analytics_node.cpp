@@ -64,7 +64,10 @@ int main(int argc, char *argv[])
 	ofstream TextFile;
 
 	// Defining string for all traffix signs
-	string right("Right Turn"), left("Left Turn"), speed("Speed Limit"), stop("Stop"), intersection("Intersection");
+	vector<double> pdf_values(number_of_groups);
+	Mat decision(1, number_of_groups, CV_16U);					// These decision values are in the following order
+	string left("Left Turn"), right("Right Turn"), speed("Speed Limit"), stop("Stop"), intersection("Intersection");
+
 
 	Mat feature_vector(1, number_of_features, CV_64F), feature_points, reduced_feature_points;
 
@@ -146,6 +149,11 @@ int main(int argc, char *argv[])
 	Mat reduced_grouped_feature_vector/*(images_per_group, number_of_reduced_features, CV_64F)*/;
 	Mat covariance_mat, mean;
 	Mat eigen_values, eigen_vectors, reordered_eigen_vectors(number_of_reduced_features, number_of_features, CV_64F);
+
+	// Form the multi-channel eigen vector containing matrix
+//	Mat all_reordered_eigen_vectors(number_of_reduced_features, number_of_features, CV_64FC(number_of_samples));
+	vector<Mat> all_reordered_eigen_vectors;
+
 	// Find covariance matrix
 	int counter = 0, counter_k;
 	for(group_counter = 0; group_counter < number_of_groups; group_counter++) {
@@ -163,6 +171,8 @@ int main(int argc, char *argv[])
 
 		// Finding the lowest 10 eigen vectors from the main eigen vector mat
 		reordered_eigen_vectors = reorder_eigenvectors(eigen_vectors);
+		// At this point, store the eigen vectors in the multi channel mat that stores all the eigen vectors
+		all_reordered_eigen_vectors.push_back(reordered_eigen_vectors);
 
 		// Reducing feature dimension to 10 features
 		reduce_feature_dimension(reordered_eigen_vectors, trans_grouped_vectors, reduced_grouped_feature_vector);
@@ -188,7 +198,7 @@ int main(int argc, char *argv[])
 		for(image_counter = 0; image_counter < images_per_group; image_counter++) {
 			// Getting Hermit polynomial for each image
 			cout << "IMAGE " << (images_per_group*group_counter) + image_counter + 1 << endl;
-			phi_values += perform_hermitz_function_approximation(feature_points.row(images_per_group*group_counter + image_counter));
+			phi_values += perform_hermitz_function_approximation(reduced_feature_points.row(images_per_group*group_counter + image_counter));
 		}
 
 		reduce(phi_values, val, 1, REDUCE_SUM);
@@ -196,6 +206,7 @@ int main(int argc, char *argv[])
 		alpha.push_back((val.at<double>(0,0))/images_per_group);
 	}
 
+	// Most important part of the code
 	cout << alpha[0] << endl;
 	cout << alpha[1] << endl;
 	cout << alpha[2] << endl;
@@ -207,15 +218,48 @@ int main(int argc, char *argv[])
 	///
 	/// 1) Load an image
 	Mat test_image = imread("/home/gauraochaudhari/Documents/CMPE297/Slider_images_all_one/test.jpg");
+	Mat red_feature_vec, trans_feature_vector, re_eigen_vector, hermitz_op;
 
 	/// 2) Do pre-processing on image
 	perform_image_preprocessing(test_image, gray_image, binary_image);
 
 	/// 3) Calculate features
 	feature_calculation(gray_image, binary_image, TextFile, false, feature_vector); //	false parameter to disable file storage
+	transpose(feature_vector, trans_feature_vector);
 
 	/// 4) Reduce the feature vector
 	// QUESTION HERE: HOW TO REDUCE THE FEATURE VECTOR DIMENSION
+	// This feature vector is reduced using the eigen vectors from all the groups
+	for(int counter = 0; counter < number_of_groups; counter++) {
+		re_eigen_vector = all_reordered_eigen_vectors[counter];
+		reduce_feature_dimension(re_eigen_vector, trans_feature_vector, red_feature_vec);	// red_feature_vec will get the new feature
+																							// vector
+
+		// Now finding the Hermitz using this new feature vector
+		// Calculating PDF for these 5 feature vectors for this image
+		// Using these <number_of_samples> different PDF's
+		hermitz_op = perform_hermitz_function_approximation(red_feature_vec);
+		reduce(hermitz_op, val, 1, REDUCE_SUM);
+
+		// Calculating PDF now for the appropriate alpha and then storing those five values in a Mat
+		// Pushing that value to decision_values mat
+		pdf_values[counter] = val.at<double>(0,0) * alpha[counter];
+	}
+	// Sorting pdf_values
+	sortIdx(pdf_values, decision, SORT_ASCENDING | SORT_EVERY_ROW);
+
+	switch (decision.at<int>(0,0)) {
+		case 0:
+			cout << left << endl; break;
+		case 1:
+			cout << right << endl; break;
+		case 2:
+			cout << speed << endl; break;
+		case 3:
+			cout << stop << endl; break;
+		case 4:
+			cout << intersection << endl; break;
+	}
 
 
 	/// 5) Calculate hermitz values - Get phi from here
