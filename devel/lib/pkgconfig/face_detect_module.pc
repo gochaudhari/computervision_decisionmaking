@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/catkin_ws/devel
+
+Name: face_detect_module
+Description: Description of face_detect_module
+Version: 0.0.0
+Cflags: -I/home/ubuntu/catkin_ws/src/face_detect_module/include
+Libs: -L/home/ubuntu/catkin_ws/devel/lib 
+Requires: opencv image_transport pcl_conversions rosconsole roscpp rospy std_msgs

@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/catkin_ws/devel
+
+Name: object_depth_module
+Description: Description of object_depth_module
+Version: 0.0.0
+Cflags: -I/home/ubuntu/catkin_ws/src/object_depth_module/include
+Libs: -L/home/ubuntu/catkin_ws/devel/lib 
+Requires: rosconsole opencv image_transport roscpp rospy std_msgs pcl_conversions

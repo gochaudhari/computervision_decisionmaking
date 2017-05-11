@@ -1,0 +1,8 @@
+prefix=/home/gauraochaudhari/catkin_ws/devel
+
+Name: video_analytics
+Description: Description of video_analytics
+Version: 0.0.0
+Cflags: -I/home/gauraochaudhari/catkin_ws/src/video_analytics/include
+Libs: -L/home/gauraochaudhari/catkin_ws/devel/lib 
+Requires: image_transport opencv pcl_conversions rosconsole roscpp rospy std_msgs

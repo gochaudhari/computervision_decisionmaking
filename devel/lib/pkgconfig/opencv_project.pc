@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/catkin_ws/devel
+
+Name: opencv_project
+Description: Description of opencv_project
+Version: 0.0.0
+Cflags: -I/home/ubuntu/catkin_ws/src/opencv_project/include
+Libs: -L/home/ubuntu/catkin_ws/devel/lib 
+Requires: rosconsole opencv image_transport roscpp rospy std_msgs pcl_conversions

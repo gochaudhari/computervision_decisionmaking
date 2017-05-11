@@ -1,0 +1,8 @@
+prefix=/home/gauraochaudhari/catkin_ws/install
+
+Name: rosserial_server
+Description: Description of rosserial_server
+Version: 0.6.4
+Cflags: -I/home/gauraochaudhari/catkin_ws/install/include -I/usr/include
+Libs: -L/home/gauraochaudhari/catkin_ws/install/lib 
+Requires: roscpp rosserial_msgs topic_tools

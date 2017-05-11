@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/catkin_ws/devel
+
+Name: create_2_motion_handle
+Description: Description of create_2_motion_handle
+Version: 0.0.0
+Cflags: -I/home/ubuntu/catkin_ws/src/create_2_motion_handle/include
+Libs: -L/home/ubuntu/catkin_ws/devel/lib 
+Requires: rosconsole roscpp rospy std_msgs publisher_subscriber

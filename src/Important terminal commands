@@ -1,0 +1,6 @@
+1) Check opencv version: 
+ pkg-config --modversion opencv
+
+2) Check library paths for opencv
+pkg-config --cflags opencv
+pkg-config --libs opencv
