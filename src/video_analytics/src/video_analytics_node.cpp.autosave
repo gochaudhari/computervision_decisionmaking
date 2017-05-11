@@ -255,6 +255,7 @@ int main(int argc, char *argv[])
 		cout << pdf_values[0] << endl;cout << pdf_values[1] << endl;
 		cout << pdf_values[2] << endl;cout << pdf_values[3] << endl;
 		cout << pdf_values[4] << endl;
+		
 		cout << decision << endl;
 		switch (decision.at<int>(0,0)) {
 			case 0:
