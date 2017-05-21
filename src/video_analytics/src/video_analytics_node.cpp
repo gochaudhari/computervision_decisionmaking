@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 	Mat input_image, gray_image, binary_image;
 	string activity = argv[1];									// What activity to perform
 	int images_per_group = atoi(argv[2]);
-	bool is_offline_image = false, is_live_video = false, is_video = false;
+	bool is_offline_image = false, is_live_video = false;
 	int image_count = number_of_samples;
 	int group_counter = 0, number_of_groups = image_count/images_per_group;
 
@@ -61,9 +61,6 @@ int main(int argc, char *argv[])
 	}
 	else if(!strcmp(activity.c_str(), "process_live_video")) {
 		is_live_video = true;
-	}
-	else if(!strcmp(activity.c_str(), "video")) {
-		is_video = true;
 	}
 	else {
 		cout << "Error in Usage\nUsage: <exe> <activity>[feature, convolution]" << endl;

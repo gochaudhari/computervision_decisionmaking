@@ -14,6 +14,7 @@ using namespace std;
 using namespace cv;
 
 extern int number_of_samples, number_of_features, number_of_reduced_features;
+Mat convoluted_image;
 
 /// ROUTINE FOR FEATURE CALCULATION.
 /// RETURN: FUNCTION FEATURES VECTOR: Mat&
@@ -111,10 +112,19 @@ void perform_image_preprocessing(Mat& input_image, Mat& gray_image, Mat& binary_
 
 	// Coverting a grayscale image into a binary image.
 	threshold(gray_image, binary_image, 100, 255, CV_THRESH_BINARY);
-
 	// Showing the binary image.
 	namedWindow("Binary Image", WINDOW_AUTOSIZE);
 	imshow("Binary Image", binary_image);
+
+	//Performing Convolution
+	int kernel_size = 3, depth = -1, delta = 0;
+	Mat kernel(kernel_size, kernel_size, CV_32S);
+	kernel.at<int>(0,0) = -1; kernel.at<int>(0,1) = 0; kernel.at<int>(0,2) = -1;
+	Point anchor = Point( -1, -1 );
+
+	/// Apply filter
+	filter2D(binary_image, convoluted_image, depth , kernel, anchor, delta, BORDER_DEFAULT );
+	imshow("Convoluted Image", convoluted_image);
 }
 
 // Get the input array of features here.
