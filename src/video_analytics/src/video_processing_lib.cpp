@@ -16,7 +16,7 @@ using namespace cv;
 extern int number_of_samples, number_of_features, number_of_reduced_features;
 
 /// ROUTINE FOR FEATURE CALCULATION.
-/// RETURN: FUNCTION FEATURES: Mat&
+/// RETURN: FUNCTION FEATURES VECTOR: Mat&
 void feature_calculation(Mat& grayImage, Mat& binaryImage, ofstream& TextFile, bool save_to_file, Mat &feature_vector) {
 	// Feature parameter initialization
 	int perimeter = 0;
@@ -134,7 +134,9 @@ int find_contour_features(Mat &input_image, int &perimeter, double &area, vector
 
 	/// Detect edges using canny
 	Canny( input_image, input_image, threshold, threshold*2, 3 );
-	imshow("Canny Output", input_image);
+	imshow("Canny Output", input_image);								// Brother, don't get confused
+																		// input_image is Canny output.
+																		// Do not use input_image to display original image
 
 	// Finding different contours
 	vector<Vec4i> hierarchy;

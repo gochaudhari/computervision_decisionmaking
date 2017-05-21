@@ -21,25 +21,6 @@ string filename, image_type_1, image_type_2;
 int number_of_samples = 25, number_of_features = 19, number_of_reduced_features = 10;
 vector<double> alpha;
 
-void onTrackbarSlide(int pos) {
-	cvSetCaptureProperty(
-				capture,
-				CV_CAP_PROP_POS_FRAMES,
-				pos
-				);
-
-	store_image = cvarrToMat(frame);
-
-	filename = image_type_1.append(to_string(filenumber));
-	filename = filename.append(".jpg");
-	imwrite(filename, store_image);
-	cout << "Position changed. File stored. Current position: " << pos << endl;
-
-	image_type_1 = image_type_2;
-	filename.erase();
-	filenumber++;
-}
-
 /// TODO: The final requirement of this project is to get the following things done
 /// 1) Get the live feed from the video
 /// 2) Perform 2D convolution on the image using give kernels
@@ -66,7 +47,7 @@ int main(int argc, char *argv[])
 	// Defining string for all traffix signs
 	vector<double> pdf_values(number_of_groups);
 	Mat decision(1, number_of_groups, CV_16U);					// These decision values are in the following order
-	string left("Left Turn"), right("Right Turn"), speed("Speed Limit"), stop("Stop"), intersection("Intersection");
+	string left("Left Turn"), right("Right Turn"), speed("Speed Limit"), stop("Stop"), intersection("Intersection"), decision_text;
 
 
 	Mat feature_vector(1, number_of_features, CV_64F), feature_points, reduced_feature_points;
@@ -124,26 +105,6 @@ int main(int argc, char *argv[])
 	}
 	TextFile.close();
 
-
-//	Mat temp(1, 2, CV_64F);
-//	for(int i = 0; i < 2; i++) {
-//		for(int j = 0; j < 2; j++) {
-//			temp.at<double>(i, j) = (++counter)*100;
-//			cout << temp.at<double_t>(i, j) << " ";
-//		}
-//		cout << endl;
-//	}
-
-//	for(int i = 0; i < 2; i++) {
-//		for(int j = 0; j < 2; j++) {
-//			cout << temp.at<double_t>(i, j) << " ";
-//		}
-//		cout << endl;
-//	}
-//	temp.at<double>(0, 2) = 32;
-//	Now perform k means clustering
-//	perform_k_means();
-
 	/// PERFORMING FEATURE VECTOR REDUCTION
 	Mat buffer, grouped_feature_vector(images_per_group, number_of_features, CV_64F), trans_grouped_vectors;
 	Mat reduced_grouped_feature_vector/*(images_per_group, number_of_reduced_features, CV_64F)*/;
@@ -182,8 +143,7 @@ int main(int argc, char *argv[])
 			reduced_feature_points.push_back(reduced_grouped_feature_vector.row(counter));
 		}
 	}
-	/// reduced_feature_points contains the reduced feature vectors.
-
+	/// reduced_feature_points: Reduced Feature Vectors.
 
 	/// Call the Hermitz function in a loop that spans over all the samples present
 	///
@@ -214,7 +174,6 @@ int main(int argc, char *argv[])
 	cout << alpha[4] << endl;
 
 	if(is_offline_image){
-		cout << "\n\nIMAGE NUMBER: " << image_counter << endl;
 		image_name = argv[3];
 		image_name = image_directory.append(image_name);
 
@@ -252,10 +211,12 @@ int main(int argc, char *argv[])
 		}
 		// Sorting pdf_values
 		sortIdx(pdf_values, decision, SORT_DESCENDING | SORT_EVERY_ROW);
-		cout << pdf_values[0] << endl;cout << pdf_values[1] << endl;
-		cout << pdf_values[2] << endl;cout << pdf_values[3] << endl;
-		cout << pdf_values[4] << endl;
+
+		cout << "\n\n----------------------------------------------------------------------------------" << endl;
+		cout << "\t\t\t  TESTING ON A NEW IMAGE" << endl;
+		cout << pdf_values[0] << " " << pdf_values[1] << " " << pdf_values[2] << " " << pdf_values[3] << " " << pdf_values[4] << endl;
 		cout << decision << endl;
+		cout << "Detected Image: ";
 		switch (decision.at<int>(0,0)) {
 			case 0:
 				cout << left << endl; break;
@@ -268,40 +229,83 @@ int main(int argc, char *argv[])
 			case 4:
 				cout << intersection << endl; break;
 		}
+		cout << "----------------------------------------------------------------------------------" << endl;
 	}
 	else if(is_live_video) {
+		// Get the video capture from the the video file.
+		cout << "Running from a live video" << endl;
+		Mat test_image;
+		VideoCapture video_capture_file;
+		video_capture_file.open("/home/gauraochaudhari/Documents/CMPE297/Photos and Videos/left.MOV");
 
-	}
-	else if(is_video)
-	{
-		string video_name = argv[3];
-		cout << "Starting video" << endl;
-		namedWindow("Example 3", CV_WINDOW_AUTOSIZE);
-		capture = cvCreateFileCapture(video_name.c_str());
-
-		int frames = (int) cvGetCaptureProperty(
-					capture,
-					CV_CAP_PROP_FRAME_COUNT
-					);
-		if( frames!= 0 ) {
-			cvCreateTrackbar(
-						"Position",
-						"Example 3",
-						&g_slider_position,
-						frames,
-						onTrackbarSlide
-						);
+		if(!video_capture_file.isOpened()) {
+			cout << "Problem opening the video" << endl;
+			return -1;
 		}
-		while(1)
-		{
-			frame = cvQueryFrame(capture);
-			if( !frame ) break;
-			cvShowImage("Example 3", frame);
+		else {
+			cout << "Video Opened" << endl;
+		}
+
+		while(video_capture_file.grab()) {
+			if(!video_capture_file.retrieve(test_image)) cout << "Image not retrieved" << endl;
+
+			Mat red_feature_vec, trans_feature_vector, re_eigen_vector, hermitz_op;
+
+			/// 2) Do pre-processing on image
+			perform_image_preprocessing(test_image, gray_image, binary_image);
+
+			/// 3) Calculate features
+			feature_calculation(gray_image, binary_image, TextFile, false, feature_vector); //	false parameter to disable file storage
+			transpose(feature_vector, trans_feature_vector);
+
+			/// 4) Reduce the feature vector
+			// QUESTION HERE: HOW TO REDUCE THE FEATURE VECTOR DIMENSION
+			// This feature vector is reduced using the eigen vectors from all the groups
+			for(int counter = 0; counter < number_of_groups; counter++) {
+				re_eigen_vector = all_reordered_eigen_vectors[counter];
+				reduce_feature_dimension(re_eigen_vector, trans_feature_vector, red_feature_vec);	// red_feature_vec will get the new feature
+																									// vector
+
+				// Now finding the Hermitz using this new feature vector
+				// Calculating PDF for these 5 feature vectors for this image
+				// Using these <number_of_samples> different PDF's
+				hermitz_op = perform_hermitz_function_approximation(red_feature_vec);
+				reduce(hermitz_op, val, 1, REDUCE_SUM);
+
+				// Calculating PDF now for the appropriate alpha and then storing those five values in a Mat
+				// Pushing that value to decision_values mat
+				pdf_values[counter] = val.at<double>(0,0) * alpha[counter];
+			}
+			// Sorting pdf_values
+			sortIdx(pdf_values, decision, SORT_DESCENDING | SORT_EVERY_ROW);
+
+			cout << "\n\n----------------------------------------------------------------------------------" << endl;
+			cout << "\t\t\t  TESTING ON A NEW IMAGE" << endl;
+			cout << pdf_values[0] << " " << pdf_values[1] << " " << pdf_values[2] << " " << pdf_values[3] << " " << pdf_values[4] << endl;
+			cout << decision << endl;
+			cout << "Detected Image: ";
+			switch (decision.at<int>(0,0)) {
+				case 0:
+					decision_text = left; break;
+				case 1:
+					decision_text = right; break;
+				case 2:
+					decision_text = speed; break;
+				case 3:
+					decision_text = stop; break;
+				case 4:
+					decision_text = intersection; break;
+			}
+			cout << decision_text << endl;
+			putText(test_image, decision_text, cvPoint(30,30),
+				FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,255), 1, CV_AA);
+			imshow("Input Image", test_image);
+			cout << "----------------------------------------------------------------------------------" << endl;
+
 			char c = cvWaitKey(33);
-			if( c == 27 ) break;
 		}
-		cvReleaseCapture(&capture);
-		cvDestroyWindow("Example 3");
+
+		video_capture_file.release();
 	}
 
 	waitKey();
